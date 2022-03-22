@@ -10,10 +10,6 @@ class Board
     @board[row][column] = mark
   end
 
-  def clear_board
-    @board = Array.new(3, ' ') { Array.new(3, ' ') }
-  end
-
   def print_board
     puts "#{@board[0][0]}|#{@board[0][1]}|#{@board[0][2]}"
     puts "#{@board[1][0]}|#{@board[1][1]}|#{@board[1][2]}"
@@ -93,6 +89,12 @@ while still_playing
   # Checking for winner
   if board.winner?
     puts player1.next? ? "Winner is #{player2.name}" : "Winner is #{player1.name}"
-    still_playing = false
+    puts 'Play again? y/n:'
+    if gets.chomp.downcase == 'y'
+      board = Board.new
+      first_round = true
+    else
+      still_playing = false
+    end
   end
 end
