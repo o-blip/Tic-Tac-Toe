@@ -1,54 +1,103 @@
+# Rules to a game 
+module Game
+  def check_first(player2)
+    if rand(2).zero?
+      self.mark = 'x'
+      self.turn = true
+      puts "#{self.name} goes first"
+    else
+      player2.mark = 'x'
+      player2.turn = true
+      puts "#{player2.name} goes first"
+    end
+  end
+
+  def round(player2, board)
+    puts "1|2|3\n4|5|6\n7|8|9"
+    [self, player2].each do |player|
+      if player.turn?
+        puts "#{player.name}, make your move:"
+        player.choose_move(board, gets.chomp.to_i)
+      else
+        player.turn = true
+      end
+    end
+  end
+
+  def lines(board)
+    spots = board.spots
+    possibilities = [[spots[0], spots[4], spots[8]],[spots[2], spots[4], spots[6]]]
+    (0..2).each do |i|
+      possibilities.push([spots[3 * i], spots[3 * i + 1], spots[3 * i + 2]]) # rows
+      possibilities.push([spots[i], spots[i + 3], spots[i + 6]]) # columns
+    end
+    possibilities
+  end
+
+  def winner?(player2, board)
+    conditions = lines(board)
+    
+    conditions.each do |line|
+      if line.all?('x') || line.all?('o')
+        puts self.turn? ? "Winner is #{player2.name}!" : "Winner is #{self.name}"
+        return false
+      end
+    end
+    
+    if conditions.flatten.none?(' ')
+      puts "Tie!"
+      return false
+    end
+    return true
+  end
+end
+
+
+
 # Represents the game board
 class Board
+  attr_accessor :spots
+  include Game
   def initialize
-    @board = Array.new(3, ' ') { Array.new(3, ' ') }
+    @spots = Array.new(9, ' ')
   end
 
   def mark_board(mark, number)
-    row = (number - 1) / 3
-    column = (number - 1) % 3
-    @board[row][column] = mark
-  end
-
-  def clear_board
-    @board = Array.new(3, ' ') { Array.new(3, ' ') }
+    until spots[number - 1] == ' '
+      puts "This spot's taken, choose again"
+      number = gets.chomp.to_i
+    end
+    spots[number - 1] = mark
   end
 
   def print_board
-    puts "#{@board[0][0]}|#{@board[0][1]}|#{@board[0][2]}"
-    puts "#{@board[1][0]}|#{@board[1][1]}|#{@board[1][2]}"
-    puts "#{@board[2][0]}|#{@board[2][1]}|#{@board[2][2]}"
+    puts "#{spots[0]}|#{spots[1]}|#{spots[2]}"
+    puts "#{spots[3]}|#{spots[4]}|#{spots[5]}"
+    puts "#{spots[6]}|#{spots[7]}|#{spots[8]}"
   end
-
-  def winner?
-    possibilities = [[@board[0][0], @board[1][1], @board[2][2]], [@board[0][2], @board[1][1], @board[2][0]]]
-    for i in (0..2)
-      possibilities.push(@board[i])
-      possibilities.push([@board[0][i], @board[1][i], @board[2][i]])
-    end
-    possibilities.any? { |poss| poss.all?('x') || poss.all?('o') }
-  end
-
+  
+  
 end
 
 # Player objects which choose where to place marks
 class Player
+  include Game
   attr_accessor :mark
-  attr_writer :next
+  attr_writer :turn
   attr_reader :name
 
   def initialize(name)
     @name = name
     @mark = 'o'
-    @next = false
+    @turn = false
   end
 
   def choose_move(board, number)
     board.mark_board(self.mark, number)
-    self.next = false
+    self.turn = false
   end
-  def next?
-    @next
+  def turn?
+    @turn
   end
 end
 
@@ -65,34 +114,14 @@ first_round = true
 while still_playing
   if first_round
     # First round: decide on player order
-    puts 'I will now randomly choose who goes first'
-    if rand(2).zero?
-      player1.mark = 'x'
-      player1.next = true
-      puts "#{player1.name} goes first:"
-    else
-      player2.mark = 'x'
-      player2.next = true
-      puts "#{player2.name} goes first:"
-    end
+    puts 'Randomly choosing who goes first...'
+    player1.check_first(player2)
     first_round = false
   end
 
-  puts 'MAKE YOUR MOVE FOOL:'
-  puts "1|2|3\n4|5|6\n7|8|9"
-
-  if player1.next?
-    player1.choose_move(board, gets.chomp.to_i)
-    player2.next = true
-  else
-    player2.choose_move(board, gets.chomp.to_i)
-    player1.next = true
-  end
+  player1.round(player2, board)
   puts board.print_board
+  still_playing = player1.winner?(player2, board)
+  
 
-  # Checking for winner
-  if board.winner?
-    puts player1.next? ? "Winner is #{player2.name}" : "Winner is #{player1.name}"
-    still_playing = false
-  end
 end
